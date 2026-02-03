@@ -11,6 +11,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from data.ingestion import DataIngestion
 from strategies.momentum import MomentumStrategy
+from strategies.ml_alpha import MLAlphaStrategy
+from backtesting.engine import BacktestEngine
 import requests
 from strategies.lstm_alpha import LSTMAlphaStrategy
 from risk.optimizer import PortfolioOptimizer
@@ -259,4 +261,4 @@ else:
 
 # Footer
 st.markdown("---")
-st.caption("Built with Python, Streamlit, and Scikit-Learn | Phase 7 Complete")
+st.caption("Built with Python, Streamlit, and FastAPI | Phase 12: Production Auth Complete")

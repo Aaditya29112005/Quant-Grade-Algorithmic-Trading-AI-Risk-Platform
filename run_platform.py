@@ -20,8 +20,8 @@ def main():
     frontend_process = subprocess.Popen([sys.executable, "-m", "streamlit", "run", "dashboard/app.py"])
     
     print("\n✅ System Running!")
-    print("API: http://localhost:8000")
-    print("Dashboard: http://localhost:8501")
+    print("API: http://127.0.0.1:8000")
+    print("Dashboard: http://127.0.0.1:8501")
     print("Press Ctrl+C to stop both servers.")
     
     try:

@@ -43,12 +43,12 @@ async def signup(username: str, password: str, email: str):
 
 @router.get("/login/google")
 async def login_google(request: Request):
-    redirect_uri = "http://localhost:8000/auth/callback/google"
+    redirect_uri = "http://127.0.0.1:8000/auth/callback/google"
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @router.get("/login/github")
 async def login_github(request: Request):
-    redirect_uri = "http://localhost:8000/auth/callback/github"
+    redirect_uri = "http://127.0.0.1:8000/auth/callback/github"
     return await oauth.github.authorize_redirect(request, redirect_uri)
 
 @router.get("/callback/google")
@@ -56,7 +56,7 @@ async def callback_google(request: Request):
     try:
         token = await oauth.google.authorize_access_token(request)
     except Exception as e:
-         raise HTTPException(status_code=400, detail=str(e))
+         raise HTTPException(status_code=400, detail=f"OAuth Error: {str(e)}")
          
     user_info = token.get('userinfo')
     if not user_info:
@@ -79,14 +79,14 @@ async def callback_google(request: Request):
         data={"sub": email}, expires_delta=access_token_expires
     )
     
-    return RedirectResponse(url=f"http://localhost:8501/?token={access_token}")
+    return RedirectResponse(url=f"http://127.0.0.1:8501/?token={access_token}")
 
 @router.get("/callback/github")
 async def callback_github(request: Request):
     try:
         token = await oauth.github.authorize_access_token(request)
     except Exception as e:
-         raise HTTPException(status_code=400, detail=str(e))
+         raise HTTPException(status_code=400, detail=f"OAuth Error: {str(e)}")
          
     resp = await oauth.github.get('user', token=token)
     profile = resp.json()
@@ -102,5 +102,5 @@ async def callback_github(request: Request):
     access_token = create_access_token(
         data={"sub": username}, expires_delta=access_token_expires
     )
-    return RedirectResponse(url=f"http://localhost:8501/?token={access_token}")
+    return RedirectResponse(url=f"http://127.0.0.1:8501/?token={access_token}")
 
