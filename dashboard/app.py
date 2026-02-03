@@ -29,7 +29,7 @@ st.set_page_config(
 # --- Authentication Logic ---
 def login_user(username, password):
     try:
-        response = requests.post(f"{API_URL}/token", data={"username": username, "password": password})
+        response = requests.post(f"{API_URL}/auth/token", data={"username": username, "password": password})
         if response.status_code == 200:
             return response.json()
         return None
@@ -38,7 +38,7 @@ def login_user(username, password):
 
 def signup_user(username, password, email):
     try:
-        response = requests.post(f"{API_URL}/signup", params={"username": username, "password": password, "email": email})
+        response = requests.post(f"{API_URL}/auth/signup", params={"username": username, "password": password, "email": email})
         return response.status_code == 200
     except:
         return False
@@ -95,11 +95,11 @@ if not st.session_state['authenticated']:
         if c1.button("Continue with Google 🇬"):
             st.info("Redirecting to Google OAuth...")
             # In a real app, use st.markdown with a link to backend auth endpoint
-            st.markdown(f"[Click here to verify Google Identity]({API_URL}/login/google)")
+            st.markdown(f"[Click here to verify Google Identity]({API_URL}/auth/login/google)")
         
         if c2.button("Continue with GitHub 🐙"):
             st.info("Redirecting to GitHub OAuth...")
-            st.markdown(f"[Click here to verify GitHub Identity]({API_URL}/login/github)")
+            st.markdown(f"[Click here to verify GitHub Identity]({API_URL}/auth/login/github)")
 
     st.stop() # Stop execution if not logged in
 
