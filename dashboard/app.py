@@ -11,8 +11,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from data.ingestion import DataIngestion
 from strategies.momentum import MomentumStrategy
-from risk.optimizer import PortfolioOptimizer
+import requests
 from strategies.lstm_alpha import LSTMAlphaStrategy
+from risk.optimizer import PortfolioOptimizer
+
+# API Configuration
+API_URL = "http://127.0.0.1:8000"
 
 # Page Configuration
 st.set_page_config(
@@ -21,6 +25,90 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# --- Authentication Logic ---
+def login_user(username, password):
+    try:
+        response = requests.post(f"{API_URL}/token", data={"username": username, "password": password})
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except:
+        return None
+
+def signup_user(username, password, email):
+    try:
+        response = requests.post(f"{API_URL}/signup", params={"username": username, "password": password, "email": email})
+        return response.status_code == 200
+    except:
+        return False
+
+# Session State Init
+if 'authenticated' not in st.session_state:
+    st.session_state['authenticated'] = False
+if 'token' not in st.session_state:
+    st.session_state['token'] = None
+
+# --- Check for OAuth Redirect Token ---
+# Streamlit 1.30+ uses st.query_params
+if "token" in st.query_params:
+    st.session_state['token'] = st.query_params["token"]
+    st.session_state['authenticated'] = True
+    st.success("OAuth Login Successful!")
+    # Clear params to cleaner URL
+    st.query_params.clear()
+    st.rerun()
+
+# --- Login / Signup UI ---
+if not st.session_state['authenticated']:
+    st.title("🔒 Institutional Access")
+    
+    tab1, tab2, tab3 = st.tabs(["Login", "Sign Up", "OAuth (Demo)"])
+    
+    with tab1:
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.button("Login"):
+            token_data = login_user(username, password)
+            if token_data:
+                st.session_state['authenticated'] = True
+                st.session_state['token'] = token_data['access_token']
+                st.success("Logged in successfully!")
+                st.rerun()
+            else:
+                st.error("Invalid credentials or API not running.")
+                st.caption("Ensure `uvicorn api.main:app` is running on port 8000.")
+
+    with tab2:
+        new_user = st.text_input("New Username")
+        new_pass = st.text_input("New Password", type="password")
+        new_email = st.text_input("Email")
+        if st.button("Create Account"):
+            if signup_user(new_user, new_pass, new_email):
+                st.success("Account created! Please login.")
+            else:
+                st.error("Signup failed. Username might be taken.")
+
+    with tab3:
+        st.write("### Single Sign-On (SSO)")
+        c1, c2 = st.columns(2)
+        if c1.button("Continue with Google 🇬"):
+            st.info("Redirecting to Google OAuth...")
+            # In a real app, use st.markdown with a link to backend auth endpoint
+            st.markdown(f"[Click here to verify Google Identity]({API_URL}/login/google)")
+        
+        if c2.button("Continue with GitHub 🐙"):
+            st.info("Redirecting to GitHub OAuth...")
+            st.markdown(f"[Click here to verify GitHub Identity]({API_URL}/login/github)")
+
+    st.stop() # Stop execution if not logged in
+
+# --- Authenticated App Below ---
+st.sidebar.success(f"Logged in as Member")
+if st.sidebar.button("Logout"):
+    st.session_state['authenticated'] = False
+    st.session_state['token'] = None
+    st.rerun()
 
 # Title
 st.title("💸 Institutional Quant Platform")
