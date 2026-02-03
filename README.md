@@ -12,7 +12,6 @@ Designed for researchers and quants to backtest strategies with realistic market
 
 ## 🏗 System Architecture
 
-```mermaid
 graph TD
     Data[Data Ingestion (yfinance)] --> Features[Feature Engineering]
     Features --> AI[AI Layer]
