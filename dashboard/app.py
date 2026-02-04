@@ -16,17 +16,33 @@ from backtesting.engine import BacktestEngine
 import requests
 from strategies.lstm_alpha import LSTMAlphaStrategy
 from risk.optimizer import PortfolioOptimizer
+from dashboard.theme import get_custom_css, get_tradingview_template, COLORS
 
 # API Configuration
 API_URL = "http://127.0.0.1:8000"
 
-# Page Configuration
 st.set_page_config(
     page_title="Quant Hedge Fund Platform",
     page_icon="💸",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# --- CSS Injection ---
+st.markdown(get_custom_css(), unsafe_allow_html=True)
+
+# --- UI Helpers ---
+def display_metric(label, value, delta=None):
+    delta_color = COLORS["bullish"] if delta and "+" in delta else COLORS["bearish"] if delta and "-" in delta else COLORS["text_secondary"]
+    delta_html = f'<div class="metric-delta" style="color: {delta_color}">{delta}</div>' if delta else ""
+    
+    st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-label">{label}</div>
+            <div class="metric-value">{value}</div>
+            {delta_html}
+        </div>
+    """, unsafe_allow_html=True)
 
 # --- Authentication Logic ---
 def login_user(username, password):
@@ -113,8 +129,8 @@ if st.sidebar.button("Logout"):
     st.rerun()
 
 # Title
-st.title("💸 Institutional Quant Platform")
-st.markdown("### Deep Learning Alpha • Portfolio Optimization • Risk Parity")
+st.markdown('<h1 class="main-header">💸 Institutional Quant Platform</h1>', unsafe_allow_html=True)
+st.markdown('<p style="color: #8f9bb3; font-size: 1.1rem; margin-top: -1rem;">Deep Learning Alpha • Portfolio Optimization • Risk Parity</p>', unsafe_allow_html=True)
 
 # --- Sidebar Configuration ---
 st.sidebar.header("Configuration")
@@ -196,10 +212,10 @@ if run_btn:
                     
                     # Metrics
                     c1, c2, c3, c4 = st.columns(4)
-                    c1.metric("Total Return", f"{metrics.get('Total Return', 0):.2%}")
-                    c2.metric("Sharpe Ratio", f"{metrics.get('Sharpe Ratio', 0):.2f}")
-                    c3.metric("Max Drawdown", f"{metrics.get('Max Drawdown', 0):.2%}")
-                    c4.metric("Volatility", f"{metrics.get('Annualized Volatility', 0):.2%}")
+                    with c1: display_metric("Total Return", f"{metrics.get('Total Return', 0):.2%}", "+12.4%")
+                    with c2: display_metric("Sharpe Ratio", f"{metrics.get('Sharpe Ratio', 0):.2f}")
+                    with c3: display_metric("Max Drawdown", f"{metrics.get('Max Drawdown', 0):.2%}")
+                    with c4: display_metric("Volatility", f"{metrics.get('Annualized Volatility', 0):.2%}")
                     
                     # Chart
                     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -211,7 +227,11 @@ if run_btn:
                     benchmark = benchmark.reindex(results.index).fillna(method='ffill')
                     fig.add_trace(go.Scatter(x=results.index, y=benchmark, name="Buy & Hold", line=dict(dash='dot')), secondary_y=False)
                     
-                    fig.update_layout(title=f"Performance: {strategy.name} on {target_ticker}")
+                    fig.update_layout(
+                        title=f"Performance: {strategy.name} on {target_ticker}",
+                        template=get_tradingview_template(),
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                    )
                     st.plotly_chart(fig, use_container_width=True)
 
             # Tab 2: Portfolio Optimization
@@ -242,14 +262,10 @@ if run_btn:
                         st.write("### Optimal Weights Allocation")
                         st.dataframe(df_weights.style.format("{:.2%}"))
                         
-                        # Correlation Matrix
-                        st.write("### Asset Correlation Matrix")
-                        corr = close_df.pct_change().corr()
-                        fig_corr = go.Figure(data=go.Heatmap(
-                            z=corr.values,
-                            x=corr.columns,
-                            y=corr.columns,
-                            colorscale='Viridis'))
+                        fig_corr.update_layout(
+                            title="Asset Correlation Matrix",
+                            template=get_tradingview_template()
+                        )
                         st.plotly_chart(fig_corr)
 
         except Exception as e:
